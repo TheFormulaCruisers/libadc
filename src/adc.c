@@ -47,7 +47,7 @@ void adc_init(uint8_t channel_mask) {
 
 uint8_t adc_poll(uint8_t *channel, uint16_t *data) {
 
-	// Check for new conversion flag
+	// Check for conversion update flag
 	if (conv_buf.buffer[conv_buf.read_pos].info & 0x80) {
 
 		// Copy from buffer
