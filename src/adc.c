@@ -37,9 +37,9 @@ void adc_init(uint8_t channel_mask) {
 		channel_mask >>= 1;
 	}
 
-	// Initialize and start ADC
+	// Initialize and enable ADC
 	DIDR0 = channel_mask;
-	ADMUX = _BV(REFS0) | conv_buf.buffer[conv_buf.write_pos].info & 0x0F;
+	ADMUX = _BV(REFS0) | conv_buf.buffer[conv_buf.write_pos].info;
 	ADCSRA = _BV(ADEN) | _BV(ADIE) | _BV(ADPS2) | _BV(ADPS1) | _BV(ADPS0);
 #if defined ADC_START_TC0_COMP
 	ADCSRB = _BV(ADTS1) | _BV(ADTS0);

@@ -3,7 +3,6 @@
 #include <adc.h>
 
 int main(void) {
-	uint32_t timeri;
 	uint16_t adc_data;
 	uint8_t adc_channel;
 
