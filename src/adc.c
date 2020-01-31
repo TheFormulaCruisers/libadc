@@ -28,19 +28,18 @@ static volatile conv_buffer_t conv_buf = {0};
 // --------------------------------------------------------- External Functions
 
 void adc_init(uint8_t channel_mask) {
-	uint8_t channel_i, channel_mask_i;
+	uint8_t channel_i;
 
 	// Initialize conversion buffer
-	channel_mask_i = 0x01;
 	for (channel_i = 0; channel_i < 8; channel_i++) {
-		if (channel_mask_i & channel_mask)
+		if (channel_mask & 0x01)
 			conv_buf.buffer[conv_buf.buffer_size++].info = channel_i;
-		channel_mask <<= 1;
+		channel_mask >>= 1;
 	}
 
 	// Initialize and start ADC
 	DIDR0 = channel_mask;
-	ADMUX = conv_buf.buffer[conv_buf.write_pos].info & 0x0F;
+	ADMUX = _BV(REFS0) | conv_buf.buffer[conv_buf.write_pos].info & 0x0F;
 	ADCSRA = _BV(ADEN) | _BV(ADIE) | _BV(ADPS2) | _BV(ADPS1) | _BV(ADPS0);
 #if defined ADC_START_TC0_COMP
 	ADCSRB = _BV(ADTS1) | _BV(ADTS0);
@@ -107,7 +106,7 @@ ISR(ADC_vect) {
 	} else {
 		conv_buf.write_pos = 0;
 	}
-	
+
 	// Select next channel
 	ADMUX = (ADMUX & 0xF0) | (conv_buf.buffer[conv_buf.write_pos].info & 0x0F);
 }

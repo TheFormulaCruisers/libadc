@@ -9,6 +9,14 @@
  * A buffer is used to store the conversion results from each channel that has
  * been enabled by channel_mask, allowing retrieval of the results at any
  * suitable moment. The buffer always holds the latest conversion results.
+ *
+ * In order to start conversion on a timer/counter action, define one of the 
+ * following macros:
+ *	- ADC_START_TC0_COMP
+ * 	- ADC_START_TC0_OVF
+ * 	- ADC_START_TC1_COMP
+ * 	- ADC_START_TC1_OVF
+ * 	- ADC_START_TC1_CAPT
  */
 void adc_init(uint8_t channel_mask);
 
