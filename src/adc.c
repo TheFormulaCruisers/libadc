@@ -30,7 +30,7 @@ static volatile conv_buffer_t conv_buf = {0};
 void adc_init(uint8_t channel_mask) {
 	uint8_t channel_i, channel_mask_i;
 
-	// Config conversion buffer
+	// Initialize conversion buffer
 	channel_mask_i = 0x01;
 	for (channel_i = 0; channel_i < 8; channel_i++) {
 		if (channel_mask_i & channel_mask)
@@ -38,30 +38,48 @@ void adc_init(uint8_t channel_mask) {
 		channel_mask <<= 1;
 	}
 
-	// Config and start ADC
+	// Initialize and start ADC
 	DIDR0 = channel_mask;
 	ADMUX = conv_buf.buffer[conv_buf.write_pos].info & 0x0F;
-	ADCSRB = 0x00;
 	ADCSRA = _BV(ADEN) | _BV(ADIE) | _BV(ADPS2) | _BV(ADPS1) | _BV(ADPS0);
+#if defined ADC_START_TC0_COMP
+	ADCSRB = _BV(ADTS1) | _BV(ADTS0);
+	ADCSRA |= _BV(ADATE);
+#elif defined ADC_START_TC0_OVF
+	ADCSRB = _BV(ADTS2);
+	ADCSRA |= _BV(ADATE);
+#elif defined ADC_START_TC1_COMP
+	ADCSRB = _BV(ADTS2) | _BV(ADTS0);
+	ADCSRA |= _BV(ADATE);
+#elif defined ADC_START_TC1_OVF
+	ADCSRB = _BV(ADTS2) | _BV(ADTS1);
+	ADCSRA |= _BV(ADATE);
+#elif defined ADC_START_TC1_CAPT
+	ADCSRB = _BV(ADTS2) | _BV(ADTS1) | _BV(ADTS0);
+	ADCSRA |= _BV(ADATE);
+#else
+	ADCSRB = 0x00;
+#endif
 }
 
 uint8_t adc_poll(uint8_t *channel, uint16_t *data) {
+	const uint8_t buf_rpos = conv_buf.read_pos;
 
 	// Check for conversion update flag
-	if (conv_buf.buffer[conv_buf.read_pos].info & 0x80) {
+	if (conv_buf.buffer[buf_rpos].info & 0x80) {
 
 		// Copy from buffer
 		do {
-			conv_buf.buffer[conv_buf.read_pos].info &= 0x0F;
-			*channel = conv_buf.buffer[conv_buf.read_pos].info;
-			*data = conv_buf.buffer[conv_buf.read_pos].data;
+			conv_buf.buffer[buf_rpos].info &= 0x0F;
+			*channel = conv_buf.buffer[buf_rpos].info;
+			*data = conv_buf.buffer[buf_rpos].data;
 
 		// Retry if new data has been buffered
-		} while (conv_buf.buffer[conv_buf.read_pos].info & 0x80);
+		} while (conv_buf.buffer[buf_rpos].info & 0x80);
 
 		// Increment buffer read pointer
-		if (conv_buf.read_pos < conv_buf.buffer_size-1) {
-			conv_buf.read_pos++;
+		if (buf_rpos < conv_buf.buffer_size-1) {
+			conv_buf.read_pos = buf_rpos + 1;
 		} else {
 			conv_buf.read_pos = 0;
 		}
@@ -77,14 +95,15 @@ void adc_start(void) {
 }
 
 ISR(ADC_vect) {
+	const uint8_t buf_wpos = conv_buf.write_pos;
 
 	// Update conversion buffer
-	conv_buf.buffer[conv_buf.write_pos].info |= 0x80;
-	conv_buf.buffer[conv_buf.write_pos].data = ADC;
+	conv_buf.buffer[buf_wpos].info |= 0x80;
+	conv_buf.buffer[buf_wpos].data = ADC;
 
 	// Increment buffer write pointer
-	if (conv_buf.write_pos < conv_buf.buffer_size-1) {
-		conv_buf.write_pos++;
+	if (buf_wpos < conv_buf.buffer_size-1) {
+		conv_buf.write_pos = buf_wpos + 1;
 	} else {
 		conv_buf.write_pos = 0;
 	}

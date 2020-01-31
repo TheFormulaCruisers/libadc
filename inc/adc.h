@@ -24,9 +24,6 @@ uint8_t adc_poll(uint8_t *channel, uint16_t *data);
  * @brief Start a new conversion.
  * @param void
  * @return void
- * 
- * Can safely be called during ISRs. Only has effect if no conversion is
- * currently being done.
  */
 void adc_start(void);
 
