@@ -97,6 +97,21 @@ void adc_start(void) {
 ISR(ADC_vect) {
 	const uint8_t buf_wpos = conv_buf.write_pos;
 
+	// Reset trigger flag and timer value (if applicable)
+#if defined ADC_START_TC0_COMP
+	TCNT0 = TCNT0 - OCR0A;
+	TIFR0 ^= _BV(TOV0);
+#elif defined ADC_START_TC0_OVF
+	TIFR0 ^= _BV(OCF0A);
+#elif defined ADC_START_TC1_COMP
+	TCNT1 = TCNT1 - OCR1A;
+	TIFR1 ^= _BV(TOV1);
+#elif defined ADC_START_TC1_OVF
+	TIFR1 ^= _BV(OCF1A);
+#elif defined ADC_START_TC1_CAPT
+	TIFR1 ^= _BV(ICF1);
+#endif
+
 	// Update conversion buffer
 	conv_buf.buffer[buf_wpos].info |= 0x80;
 	conv_buf.buffer[buf_wpos].data = ADC;
