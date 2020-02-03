@@ -90,6 +90,7 @@ uint8_t adc_poll(uint8_t *channel, uint16_t *data) {
 
 void adc_start(void) {
 
+	// Start conversion
 	ADCSRA |= _BV(ADSC);
 }
 
